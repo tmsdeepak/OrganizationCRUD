@@ -1,12 +1,158 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 Resources:
-  Api:
+  Organization:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      AttributeDefinitions:
+        - AttributeName: orgid
+          AttributeType: S
+      BillingMode: PAY_PER_REQUEST
+      KeySchema:
+        - AttributeName: orgid
+          KeyType: HASH
+      StreamSpecification:
+        StreamViewType: NEW_AND_OLD_IMAGES
+  ListOrganization:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub ${AWS::StackName}-ListOrganization
+      Description: !Sub
+        - Stack ${StackTagName} Environment ${EnvironmentTagName} Function ${ResourceName}
+        - ResourceName: ListOrganization
+      CodeUri: src/ListOrganization
+      Handler: handler.handler
+      Runtime: python3.8
+      MemorySize: 3008
+      Timeout: 30
+      Tracing: Active
+      Policies:
+        - AWSXrayWriteOnlyAccess
+        - DynamoDBCrudPolicy:
+            TableName: !Ref Organization
+      Events:
+        OrganizationRouteGETlistorganization:
+          Type: Api
+          Properties:
+            Path: /listorganization
+            Method: GET
+            RestApiId: !Ref OrganizationRoute
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref Organization
+          TABLE_ARN: !GetAtt Organization.Arn
+  AddOrganization:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub ${AWS::StackName}-AddOrganization
+      Description: !Sub
+        - Stack ${StackTagName} Environment ${EnvironmentTagName} Function ${ResourceName}
+        - ResourceName: AddOrganization
+      CodeUri: src/AddOrganization
+      Handler: handler.handler
+      Runtime: python3.8
+      MemorySize: 3008
+      Timeout: 30
+      Tracing: Active
+      Policies:
+        - AWSXrayWriteOnlyAccess
+        - DynamoDBCrudPolicy:
+            TableName: !Ref Organization
+      Events:
+        OrganizationRoutePOSTorganization:
+          Type: Api
+          Properties:
+            Path: /organization
+            Method: POST
+            RestApiId: !Ref OrganizationRoute
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref Organization
+          TABLE_ARN: !GetAtt Organization.Arn
+  DeleteOrganization:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub ${AWS::StackName}-DeleteOrganization
+      Description: !Sub
+        - Stack ${StackTagName} Environment ${EnvironmentTagName} Function ${ResourceName}
+        - ResourceName: DeleteOrganization
+      CodeUri: src/DeleteOrganization
+      Handler: handler.handler
+      Runtime: python3.8
+      MemorySize: 3008
+      Timeout: 30
+      Tracing: Active
+      Policies:
+        - AWSXrayWriteOnlyAccess
+        - DynamoDBCrudPolicy:
+            TableName: !Ref Organization
+      Events:
+        OrganizationRouteDELETEorganizationorgid:
+          Type: Api
+          Properties:
+            Path: /organization/{orgid}
+            Method: DELETE
+            RestApiId: !Ref OrganizationRoute
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref Organization
+          TABLE_ARN: !GetAtt Organization.Arn
+  UpdateOrganization:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub ${AWS::StackName}-UpdateOrganization
+      Description: !Sub
+        - Stack ${StackTagName} Environment ${EnvironmentTagName} Function ${ResourceName}
+        - ResourceName: UpdateOrganization
+      CodeUri: src/UpdateOrganization
+      Handler: handler.handler
+      Runtime: python3.8
+      MemorySize: 3008
+      Timeout: 30
+      Tracing: Active
+      Policies:
+        - AWSXrayWriteOnlyAccess
+        - DynamoDBCrudPolicy:
+            TableName: !Ref Organization
+      Events:
+        OrganizationRoutePUTorganizationorgid:
+          Type: Api
+          Properties:
+            Path: /organization/{orgid}
+            Method: PUT
+            RestApiId: !Ref OrganizationRoute
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref Organization
+          TABLE_ARN: !GetAtt Organization.Arn
+  GetOrganization:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub ${AWS::StackName}-GetOrganization
+      Description: !Sub
+        - Stack ${StackTagName} Environment ${EnvironmentTagName} Function ${ResourceName}
+        - ResourceName: GetOrganization
+      CodeUri: src/GetOrganization
+      Handler: handler.handler
+      Runtime: python3.8
+      MemorySize: 3008
+      Timeout: 30
+      Tracing: Active
+      Policies:
+        - AWSXrayWriteOnlyAccess
+      Events:
+        OrganizationRouteGETorganizationorgid:
+          Type: Api
+          Properties:
+            Path: /organization/{orgid}
+            Method: GET
+            RestApiId: !Ref OrganizationRoute
+  OrganizationRoute:
     Type: AWS::Serverless::Api
     Properties:
       Name: !Sub
         - ${ResourceName} From Stack ${StackTagName} Environment ${EnvironmentTagName}
-        - ResourceName: Api
+        - ResourceName: OrganizationRoute
       StageName: !Ref EnvironmentAPIGatewayStageName
       DefinitionBody:
         swagger: '2.0'
@@ -47,155 +193,6 @@ Resources:
               responses: {}
       EndpointConfiguration: REGIONAL
       TracingEnabled: true
-      Cors:
-        AllowHeaders: '''Authorization,Content-Type'''
-        AllowOrigin: '''*'''
-  Organization:
-    Type: AWS::DynamoDB::Table
-    Properties:
-      AttributeDefinitions:
-        - AttributeName: orgid
-          AttributeType: S
-      BillingMode: PAY_PER_REQUEST
-      KeySchema:
-        - AttributeName: orgid
-          KeyType: HASH
-      StreamSpecification:
-        StreamViewType: NEW_AND_OLD_IMAGES
-  ListOrganization:
-    Type: AWS::Serverless::Function
-    Properties:
-      FunctionName: !Sub ${AWS::StackName}-ListOrganization
-      Description: !Sub
-        - Stack ${StackTagName} Environment ${EnvironmentTagName} Function ${ResourceName}
-        - ResourceName: ListOrganization
-      CodeUri: src/Function
-      Handler: handler.handler
-      Runtime: python3.8
-      MemorySize: 3008
-      Timeout: 30
-      Tracing: Active
-      Policies:
-        - AWSXrayWriteOnlyAccess
-        - DynamoDBCrudPolicy:
-            TableName: !Ref Organization
-      Events:
-        ApiGETlistorganization:
-          Type: Api
-          Properties:
-            Path: /listorganization
-            Method: GET
-            RestApiId: !Ref Api
-      Environment:
-        Variables:
-          TABLE_NAME: !Ref Organization
-          TABLE_ARN: !GetAtt Organization.Arn
-  AddOrganization:
-    Type: AWS::Serverless::Function
-    Properties:
-      FunctionName: !Sub ${AWS::StackName}-AddOrganization
-      Description: !Sub
-        - Stack ${StackTagName} Environment ${EnvironmentTagName} Function ${ResourceName}
-        - ResourceName: AddOrganization
-      CodeUri: src/Function2
-      Handler: handler.handler
-      Runtime: python3.8
-      MemorySize: 3008
-      Timeout: 30
-      Tracing: Active
-      Policies:
-        - AWSXrayWriteOnlyAccess
-        - DynamoDBCrudPolicy:
-            TableName: !Ref Organization
-      Events:
-        ApiPOSTorganization:
-          Type: Api
-          Properties:
-            Path: /organization
-            Method: POST
-            RestApiId: !Ref Api
-      Environment:
-        Variables:
-          TABLE_NAME: !Ref Organization
-          TABLE_ARN: !GetAtt Organization.Arn
-  DeleteOrganization:
-    Type: AWS::Serverless::Function
-    Properties:
-      FunctionName: !Sub ${AWS::StackName}-DeleteOrganization
-      Description: !Sub
-        - Stack ${StackTagName} Environment ${EnvironmentTagName} Function ${ResourceName}
-        - ResourceName: DeleteOrganization
-      CodeUri: src/Function3
-      Handler: handler.handler
-      Runtime: python3.8
-      MemorySize: 3008
-      Timeout: 30
-      Tracing: Active
-      Policies:
-        - AWSXrayWriteOnlyAccess
-        - DynamoDBCrudPolicy:
-            TableName: !Ref Organization
-      Events:
-        ApiDELETEorganizationorgid:
-          Type: Api
-          Properties:
-            Path: /organization/{orgid}
-            Method: DELETE
-            RestApiId: !Ref Api
-      Environment:
-        Variables:
-          TABLE_NAME: !Ref Organization
-          TABLE_ARN: !GetAtt Organization.Arn
-  UpdateOrganization:
-    Type: AWS::Serverless::Function
-    Properties:
-      FunctionName: !Sub ${AWS::StackName}-UpdateOrganization
-      Description: !Sub
-        - Stack ${StackTagName} Environment ${EnvironmentTagName} Function ${ResourceName}
-        - ResourceName: UpdateOrganization
-      CodeUri: src/Function4
-      Handler: handler.handler
-      Runtime: python3.8
-      MemorySize: 3008
-      Timeout: 30
-      Tracing: Active
-      Policies:
-        - AWSXrayWriteOnlyAccess
-        - DynamoDBCrudPolicy:
-            TableName: !Ref Organization
-      Events:
-        ApiPUTorganizationorgid:
-          Type: Api
-          Properties:
-            Path: /organization/{orgid}
-            Method: PUT
-            RestApiId: !Ref Api
-      Environment:
-        Variables:
-          TABLE_NAME: !Ref Organization
-          TABLE_ARN: !GetAtt Organization.Arn
-  GetOrganization:
-    Type: AWS::Serverless::Function
-    Properties:
-      FunctionName: !Sub ${AWS::StackName}-GetOrganization
-      Description: !Sub
-        - Stack ${StackTagName} Environment ${EnvironmentTagName} Function ${ResourceName}
-        - ResourceName: GetOrganization
-      CodeUri: src/Function5
-      Handler: handler.handler
-      Runtime: python3.8
-      MemorySize: 3008
-      Timeout: 30
-      Tracing: Active
-      Policies:
-        - AWSXrayWriteOnlyAccess
-      Events:
-        ApiGETorganizationorgid:
-          Type: Api
-          Properties:
-            Path: /organization/{orgid}
-            Method: GET
-            RestApiId: !Ref Api
 Parameters:
   StackTagName:
     Type: String
